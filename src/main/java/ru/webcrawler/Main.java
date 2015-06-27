@@ -11,8 +11,7 @@ public class Main {
         String url = args[0];
         int depth = Integer.parseInt(args[1]);
 
-        Page page = new Page(url, 0);
-        page.load();
+        CrawlerService.start(url, depth, 10);
     }
 
 }

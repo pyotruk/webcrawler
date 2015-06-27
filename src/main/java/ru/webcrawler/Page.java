@@ -51,14 +51,13 @@ public final class Page {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder("");
+        /*StringBuilder sb = new StringBuilder("");
         for (Page page : childrenPages) {
             sb.append("\n\t").append(page);
-        }
-        return "Page[depth:" + depth + "][httpCode:" + httpCode + "][url:" + url + "][children:" + sb + "]";
+        }*/
+        return "Page[depth:" + depth + "][httpCode:" + httpCode + "][url:" + url + "][children:" + childrenPages.size() + "]";
     }
 
-    //TODO thread-safe ??
     public void load() {
         try {
             Connection.Response response = Jsoup.connect(url).execute(); //TODO add timeout
@@ -70,7 +69,7 @@ public final class Page {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Page loading error", e);
         }
 
         log.info(this.toString());
