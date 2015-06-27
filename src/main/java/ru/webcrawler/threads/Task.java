@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import ru.webcrawler.CrawlerService;
 import ru.webcrawler.Page;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 /**
  * User: pyotruk
@@ -26,12 +28,13 @@ public class Task extends Thread {
     @Override
     public void run() {
         if (page.getDepth() > maxDepth) {
-            log.info("MaxDepth (" + maxDepth + ") has reached.");
+            //log.info("MaxDepth (" + maxDepth + ") has reached.");
             return;
         }
         page.load();
+        CrawlerService.getInstance().getToSaveQueue().offer(page);
 
-        CrawlerService.getInstance().getLoadedQueue().add(page);
-        CrawlerService.getInstance().getToLoadQueue().addAll(page.getChildrenPages());
+        ConcurrentLinkedQueue<Page> toLoadQueue = CrawlerService.getInstance().getToLoadQueue();
+        for (Page p : page.getChildrenPages()) toLoadQueue.offer(p);
     }
 }

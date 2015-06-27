@@ -8,6 +8,7 @@ import ru.webcrawler.threads.Task;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * User: pyotruk
@@ -20,15 +21,15 @@ public final class CrawlerService {
 
     private static CrawlerService instance = null;
 
-    private ExecutorService executorService;
-    private Thread savingThread;
-    private ConcurrentLinkedQueue<Page> toLoadQueue;
-    private ConcurrentLinkedQueue<Page> loadedQueue;
+    private final ExecutorService pool;
+    private final Thread savingThread;
+    private final ConcurrentLinkedQueue<Page> toLoadQueue;
+    private final ConcurrentLinkedQueue<Page> toSaveQueue;
 
     private int maxDepth;
 
-    public ConcurrentLinkedQueue<Page> getLoadedQueue() {
-        return loadedQueue;
+    public ConcurrentLinkedQueue<Page> getToSaveQueue() {
+        return toSaveQueue;
     }
 
     public ConcurrentLinkedQueue<Page> getToLoadQueue() {
@@ -38,15 +39,15 @@ public final class CrawlerService {
     private CrawlerService(String url, int depth, int poolSize) {
         maxDepth = depth;
         toLoadQueue = new ConcurrentLinkedQueue<>();
-        loadedQueue = new ConcurrentLinkedQueue<>();
-        executorService = Executors.newFixedThreadPool(poolSize);
+        toSaveQueue = new ConcurrentLinkedQueue<>();
+        pool = Executors.newFixedThreadPool(poolSize);
         savingThread = new SavingThread();
 
         // start page
         toLoadQueue.add(new Page(url, 0));
     }
 
-    synchronized public static CrawlerService getInstance() {
+    public static CrawlerService getInstance() {
         if (instance != null) {
             return instance;
         } else {
@@ -69,19 +70,19 @@ public final class CrawlerService {
 
         savingThread.start();
 
-        while (!toLoadQueue.isEmpty() || !loadedQueue.isEmpty()) {
-            log.info("SIZE(toLoadQueue)=" + toLoadQueue.size() + "; SIZE(loadedQueue)=" + loadedQueue.size());
+        // start page
+        Page page = toLoadQueue.poll();
+        pool.execute(new Task(page, maxDepth));
 
-            Page page = toLoadQueue.poll();
-            executorService.execute(new Task(page, maxDepth));
-            try {
-                Thread.sleep(6000);
-            } catch (InterruptedException e) {
-                break;
+        while ((((ThreadPoolExecutor) pool).getActiveCount() > 0) || (toLoadQueue.size() > 0) || (toSaveQueue.size() > 0)) {
+            while ((page = toLoadQueue.poll()) != null) {
+                pool.execute(new Task(page, maxDepth));
             }
         }
 
-        executorService.shutdown();
+        log.info("SIZE(toLoadQueue)=" + toLoadQueue.size() + "; SIZE(toSaveQueue)=" + toSaveQueue.size());
+
+        pool.shutdown();
         savingThread.interrupt();
 
         log.info("Completed.");

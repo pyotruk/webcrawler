@@ -17,25 +17,30 @@ public class SavingThread extends Thread {
 
     private static final Logger log = LoggerFactory.getLogger(SavingThread.class);
 
+    private void doSave() {
+        Queue<Page> queue = CrawlerService.getInstance().getToSaveQueue();
+        Page page;
+        ArrayList<Page> list = new ArrayList<>();
+        while ((page = queue.poll()) != null) list.add(page);
+
+        for (Page p : list) {
+            //TODO save to DB
+        }
+        log.info(list.size() + " pages have been saved.");
+    }
+
     @Override
     public void run() {
         while (!isInterrupted()) {
             try {
                 sleep(5000);
+                doSave();
+
             } catch (InterruptedException e) {
-                log.info("Interrupted.");
+                doSave();
+                log.warn(e.getMessage());
                 break;
             }
-
-            Queue<Page> queue = CrawlerService.getInstance().getLoadedQueue();
-            ArrayList<Page> list = new ArrayList<>(queue);
-            queue.clear();
-
-            log.info(list.size() + " pages are saving...");
-            for (Page page : list) {
-                //TODO save to DB
-            }
-            log.info(list.size() + " pages have been saved.");
         }
     }
 }

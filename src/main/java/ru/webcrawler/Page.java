@@ -69,7 +69,7 @@ public final class Page {
             }
 
         } catch (Exception e) {
-            log.error("Page loading error", e);
+            log.error("Page loading error: " + e.getMessage());
         }
 
         log.info(this.toString());
