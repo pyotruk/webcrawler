@@ -1,6 +1,9 @@
 package ru.webcrawler;
 
 import org.junit.Test;
+
+import java.util.ArrayList;
+
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
@@ -18,7 +21,7 @@ public class PageTests {
 
         assertEquals("httpCode must be 200", 200, page.getHttpCode());
         assertThat("page must have children", page.getChildrenPages().size(), not(0));
-        assertEquals("child's depth must be 1", 1, page.getChildrenPages().get(0).getDepth());
+        assertEquals("child's depth must be 1", 1, new ArrayList<>(page.getChildrenPages()).get(0).getDepth());
     }
 
 }
