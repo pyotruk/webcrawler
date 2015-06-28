@@ -1,10 +1,11 @@
 package ru.webcrawler;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * User: pyotruk
