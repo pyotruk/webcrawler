@@ -2,8 +2,6 @@ package ru.webcrawler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.webcrawler.threads.SavePageService;
-import ru.webcrawler.threads.LoadPageTask;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;

@@ -1,8 +1,7 @@
-package ru.webcrawler.threads;
+package ru.webcrawler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.webcrawler.Page;
 
 import java.util.ArrayList;
 import java.util.List;

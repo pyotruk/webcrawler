@@ -1,8 +1,7 @@
-package ru.webcrawler.threads;
+package ru.webcrawler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.webcrawler.Page;
 
 import java.util.Queue;
 
@@ -30,12 +29,13 @@ public class LoadPageTask extends Thread {
 
     @Override
     public void run() {
-        if (page.getDepth() > maxDepth) {
+        page.load();
+        toSaveQueue.offer(page);
+
+        if (page.getDepth() >= maxDepth) {
             log.debug("MaxDepth ({}) has reached.", maxDepth);
             return;
         }
-        page.load();
-        toSaveQueue.offer(page);
 
         for (Page p : page.getChildrenPages()) toLoadQueue.offer(p);
     }
