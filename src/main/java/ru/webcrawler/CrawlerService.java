@@ -2,8 +2,8 @@ package ru.webcrawler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.webcrawler.threads.SavingThread;
-import ru.webcrawler.threads.Task;
+import ru.webcrawler.threads.SavePageService;
+import ru.webcrawler.threads.LoadPageTask;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -15,77 +15,72 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Date: 2015-06-27
  */
 
-public final class CrawlerService {
+public final class CrawlerService extends Thread {
 
     private static final Logger log = LoggerFactory.getLogger(CrawlerService.class);
 
     private static CrawlerService instance = null;
 
     private final ExecutorService pool;
-    private final Thread savingThread;
+    private final SavePageService savePageService;
     private final ConcurrentLinkedQueue<Page> toLoadQueue;
     private final ConcurrentLinkedQueue<Page> toSaveQueue;
 
-    private int maxDepth;
-
-    public ConcurrentLinkedQueue<Page> getToSaveQueue() {
-        return toSaveQueue;
-    }
-
-    public ConcurrentLinkedQueue<Page> getToLoadQueue() {
-        return toLoadQueue;
-    }
+    private final int maxDepth;
 
     private CrawlerService(String url, int depth, int poolSize) {
         maxDepth = depth;
         toLoadQueue = new ConcurrentLinkedQueue<>();
         toSaveQueue = new ConcurrentLinkedQueue<>();
         pool = Executors.newFixedThreadPool(poolSize);
-        savingThread = new SavingThread();
+        savePageService = SavePageService.createInstance(toSaveQueue);
 
         // start page
         toLoadQueue.add(new Page(url, 0));
+
+        log.info("Created with params: [url:{}][depth:{}][poolSize:{}]", url, depth, poolSize);
     }
 
-    public static CrawlerService getInstance() {
-        if (instance != null) {
-            return instance;
-        } else {
-            throw new IllegalStateException("You must start service at first.");
-        }
-    }
-
-    synchronized public static void start(String url, int depth, int poolSize) {
+    public static CrawlerService createInstance(String url, int depth, int poolSize) {
         if (instance == null) {
             instance = new CrawlerService(url, depth, poolSize);
-            instance.run();
+            return instance;
 
         } else {
-            throw new IllegalStateException("Service already started.");
+            throw new IllegalStateException("Service is a singleton and it is already created.");
         }
     }
 
-    private void run() {
+    @Override
+    public void run() {
         log.info("Starting...");
-
-        savingThread.start();
 
         // start page
         Page page = toLoadQueue.poll();
-        pool.execute(new Task(page, maxDepth));
+        pool.execute(buildTask(page));
 
-        while ((((ThreadPoolExecutor) pool).getActiveCount() > 0) || (toLoadQueue.size() > 0) || (toSaveQueue.size() > 0)) {
+        savePageService.start();
+
+        while (!isCompleted()) {
             while ((page = toLoadQueue.poll()) != null) {
-                pool.execute(new Task(page, maxDepth));
+                pool.execute(buildTask(page));
             }
         }
 
-        log.info("SIZE(toLoadQueue)=" + toLoadQueue.size() + "; SIZE(toSaveQueue)=" + toSaveQueue.size());
+        log.info("SIZE(toLoadQueue)={}; SIZE(toSaveQueue)={}", toLoadQueue.size(), toSaveQueue.size());
 
         pool.shutdown();
-        savingThread.interrupt();
+        savePageService.interrupt();
 
         log.info("Completed.");
+    }
+
+    private LoadPageTask buildTask(Page page) {
+        return new LoadPageTask(page, maxDepth, toLoadQueue, toSaveQueue);
+    }
+
+    private boolean isCompleted() {
+        return (((ThreadPoolExecutor) pool).getActiveCount() == 0) && (toLoadQueue.size() == 0) && (toSaveQueue.size() == 0);
     }
 
 }

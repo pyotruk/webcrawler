@@ -21,9 +21,11 @@ public final class Page {
 
     private String url;
     private int depth;
-    private int httpCode;
+    private int httpCode = 0;
     private String content;
     private List<Page> childrenPages = new ArrayList<>();
+
+    private final static int TIMEOUT = 5000;
 
     public Page(String url, int depth) {
         this.url = url;
@@ -51,25 +53,31 @@ public final class Page {
     }
 
     public String toString() {
-        /*StringBuilder sb = new StringBuilder("");
-        for (Page page : childrenPages) {
-            sb.append("\n\t").append(page);
-        }*/
         return "Page[depth:" + depth + "][httpCode:" + httpCode + "][url:" + url + "][children:" + childrenPages.size() + "]";
     }
 
     public void load() {
         try {
-            Connection.Response response = Jsoup.connect(url).execute(); //TODO add timeout
+            Connection.Response response = Jsoup.connect(url).timeout(TIMEOUT).execute();
             httpCode = response.statusCode();
-            Document doc = response.parse();
-            content = doc.text();
-            for (Element a : doc.select("a")) {
-                childrenPages.add(new Page(a.attr("href"), depth + 1));
+
+            try {
+                Document doc = response.parse();
+                content = doc.text();
+
+                //TODO add filtering: relative URLs, similar URLs, href=#
+                //TODO add relative URLs processing
+
+                for (Element a : doc.select("a")) {
+                    childrenPages.add(new Page(a.attr("href"), depth + 1));
+                }
+
+            } catch (Exception e) {
+                log.warn("Page parsing error: {}", e.getMessage());
             }
 
         } catch (Exception e) {
-            log.error("Page loading error: " + e.getMessage());
+            log.warn("Page loading error: {}", e.getMessage());
         }
 
         log.info(this.toString());
