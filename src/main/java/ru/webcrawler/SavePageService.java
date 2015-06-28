@@ -64,20 +64,22 @@ public class SavePageService extends Thread {
     private void saveToDB() {
         EntityTransaction t = entityManager.get().getTransaction();
 
+        int count = 0;
         for (Page page : pagesToSave) {
             try {
                 t.begin();
                 entityManager.get().persist(page);
                 t.commit();
+                ++count;
 
             } catch (PersistenceException e) {
                 t.rollback();
-                log.warn("Page saving error: {}", e.getMessage());
+                log.debug("Page saving error, seems like page is duplicated. [url:{}]", page.getUrl());
             }
         }
 
-        log.info("{} pages have been saved.", pagesToSave.size());
         pagesToSave.clear();
+        log.info("{} pages have been saved.", count);
     }
 
     private void doSave() {

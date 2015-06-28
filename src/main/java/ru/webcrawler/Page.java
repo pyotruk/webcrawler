@@ -1,5 +1,6 @@
 package ru.webcrawler;
 
+import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -9,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,7 +52,6 @@ public final class Page implements Serializable {
     @Column(name = "content")
     private String content;
 
-    //TODO add parent_id
     @Transient
     private Set<Page> childrenPages = new HashSet<>();
 
@@ -125,12 +127,13 @@ public final class Page implements Serializable {
                 content = doc.text();
 
                 for (Element a : doc.select("a")) {
-                    String url = a.attr("href");
-                    if(isValidURL(url)) {
+                    String rawUrl = a.attr("href");
+                    String url = normalizeAndValidateURL(rawUrl, getHost());
+                    if (url != null) {
                         boolean ok = childrenPages.add(new Page(url, depth + 1));
-                        if (!ok) log.info("Page [{}] already exists, skipped.", url);
+                        if (!ok) log.info("Page is duplicated, skipped. [url:{}]", url);
                     } else {
-                        log.info("URL [{}] is not valid, skipped.", url);
+                        log.debug("URL is not valid, skipped. [url:{}]", rawUrl);
                     }
                 }
 
@@ -145,11 +148,33 @@ public final class Page implements Serializable {
         log.info(this.toString());
     }
 
-    private boolean isValidURL(String url) {
-        //TODO relative URLs
-        //TODO URLs like //yandex.ru
-        //TODO regexp
-        return url.startsWith("http");
+    public static String normalizeAndValidateURL(String url, String host) {
+        UrlValidator validator = new UrlValidator();
+        boolean isValid = validator.isValid(url);
+
+        if (!isValid) {
+            if (url.startsWith("//")) { // URLs like //yandex.ru
+                url = "http:" + url;
+                isValid = validator.isValid(url);
+
+            } else { // relative URLs
+                url = "http://" + host + url;
+                isValid = validator.isValid(url);
+            }
+        }
+
+        if (isValid) return url;
+        else return null;
+    }
+
+    public String getHost() {
+        try {
+            return (new URL(url)).getHost();
+
+        } catch (MalformedURLException e) {
+            log.debug("getHost error: {}", e.getMessage());
+            return url;
+        }
     }
 
 }
