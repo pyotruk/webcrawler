@@ -131,7 +131,7 @@ public final class Page implements Serializable {
                     String url = normalizeAndValidateURL(rawUrl, getHost());
                     if (url != null) {
                         boolean ok = childrenPages.add(new Page(url, depth + 1));
-                        if (!ok) log.info("Page is duplicated, skipped. [url:{}]", url);
+                        if (!ok) log.debug("Page is duplicated, skipped. [url:{}]", url);
                     } else {
                         log.debug("URL is not valid, skipped. [url:{}]", rawUrl);
                     }

@@ -1,5 +1,4 @@
 ## Web Crawler
-@author <a href="mailto:pyotruk@gmail.com">pyotruk</a>
 
 #### Build
 ``gradle build fatJar``
