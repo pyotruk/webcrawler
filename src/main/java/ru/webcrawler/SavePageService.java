@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -16,6 +18,27 @@ import java.util.Queue;
 
 public class SavePageService extends Thread {
 
+    private class EntityManagerWrapper {
+
+        private final EntityManagerFactory emf;
+        private final EntityManager em;
+
+        public EntityManagerWrapper() {
+            emf = Persistence.createEntityManagerFactory("h2");
+            em = emf.createEntityManager();
+        }
+
+        public EntityManager get() {
+            return em;
+        }
+
+        public void close() {
+            em.close();
+            emf.close();
+        }
+
+    }
+
     private static final Logger log = LoggerFactory.getLogger(SavePageService.class);
 
     private static SavePageService instance;
@@ -24,11 +47,10 @@ public class SavePageService extends Thread {
 
     private final Queue<Page> queue;
     private List<Page> pagesToSave = new ArrayList<>();
-    private final EntityManager entityManager;
+    private EntityManagerWrapper entityManager;
 
     private SavePageService(Queue<Page> toSaveQueue) {
         this.queue = toSaveQueue;
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
         log.info("Created.");
     }
 
@@ -43,10 +65,10 @@ public class SavePageService extends Thread {
     }
 
     private void saveToDB() {
-        EntityTransaction t = entityManager.getTransaction();
+        EntityTransaction t = entityManager.get().getTransaction();
 
         t.begin();
-        for (Page page : pagesToSave) entityManager.persist(page);
+        for (Page page : pagesToSave) entityManager.get().persist(page);
         t.commit();
 
         log.info("{} pages have been saved.", pagesToSave.size());
@@ -61,6 +83,8 @@ public class SavePageService extends Thread {
 
     @Override
     public void run() {
+        entityManager = new EntityManagerWrapper();
+
         while (!isInterrupted()) {
             try {
                 sleep(SLEEP);
@@ -72,7 +96,7 @@ public class SavePageService extends Thread {
                 break;
             }
         }
+
         entityManager.close();
-        //TODO check interruption
     }
 }
