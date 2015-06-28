@@ -3,6 +3,8 @@ package ru.webcrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -22,9 +24,11 @@ public class SavePageService extends Thread {
 
     private final Queue<Page> queue;
     private List<Page> pagesToSave = new ArrayList<>();
+    private final EntityManager entityManager;
 
     private SavePageService(Queue<Page> toSaveQueue) {
         this.queue = toSaveQueue;
+        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
         log.info("Created.");
     }
 
@@ -39,9 +43,12 @@ public class SavePageService extends Thread {
     }
 
     private void saveToDB() {
-        for (Page page : pagesToSave) {
-            //TODO save to DB
-        }
+        EntityTransaction t = entityManager.getTransaction();
+
+        t.begin();
+        for (Page page : pagesToSave) entityManager.persist(page);
+        t.commit();
+
         log.info("{} pages have been saved.", pagesToSave.size());
         pagesToSave.clear();
     }
@@ -65,5 +72,7 @@ public class SavePageService extends Thread {
                 break;
             }
         }
+        entityManager.close();
+        //TODO check interruption
     }
 }

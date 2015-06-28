@@ -18,12 +18,14 @@ import java.util.Set;
  */
 
 @Entity
-@Table
+@Table(name = "PAGE")
 public final class Page implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(Page.class);
 
     private static final long serialVersionUID = -8842671428838342400L;
+
+    private final static int TIMEOUT = 5000;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -34,13 +36,23 @@ public final class Page implements Serializable {
     @Column(name = "version")
     private int version = 0;
 
+    //TODO make unique
+    @Column(name = "url")
     private String url;
-    private int depth;
-    private int httpCode = 0;
-    private String content;
-    private Set<Page> childrenPages = new HashSet<>();
 
-    private final static int TIMEOUT = 5000;
+    @Column(name = "depth")
+    private int depth;
+
+    @Column(name = "http_code")
+    private int httpCode = 0;
+
+    @Lob
+    @Column(name = "content")
+    private String content;
+
+    //TODO add parent_id
+    @Transient
+    private Set<Page> childrenPages = new HashSet<>();
 
     public Page(String url, int depth) {
         this.url = url;

@@ -20,7 +20,7 @@ public class PageTests {
         page.load();
 
         assertEquals("httpCode must be 200", 200, page.getHttpCode());
-        assertThat("page must have children", page.getChildrenPages().size(), not(0));
+        assertEquals("page must have children", false, page.getChildrenPages().isEmpty());
         assertEquals("child's depth must be 1", 1, new ArrayList<>(page.getChildrenPages()).get(0).getDepth());
     }
 

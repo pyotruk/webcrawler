@@ -37,7 +37,7 @@ public class SavePageServiceTests {
             e.printStackTrace();
         }
 
-        assertEquals("toSaveQueue must be empty", 0, toSaveQueue.size());
+        assertEquals("toSaveQueue must be empty", true, toSaveQueue.isEmpty());
     }
 
 }
