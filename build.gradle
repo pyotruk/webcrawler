@@ -12,6 +12,10 @@ idea {
     }
 }
 
+test {
+    forkEvery = 1
+}
+
 repositories {
     mavenLocal()
     mavenCentral()

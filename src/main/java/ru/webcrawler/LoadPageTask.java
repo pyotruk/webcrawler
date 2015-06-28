@@ -15,10 +15,10 @@ public class LoadPageTask extends Thread {
 
     private static final Logger log = LoggerFactory.getLogger(LoadPageTask.class);
 
-    private Page page;
-    private int maxDepth;
-    private Queue<Page> toLoadQueue;
-    private Queue<Page> toSaveQueue;
+    private final Page page;
+    private final int maxDepth;
+    private final Queue<Page> toLoadQueue;
+    private final Queue<Page> toSaveQueue;
 
     public LoadPageTask(Page page, int maxDepth, Queue<Page> toLoadQueue, Queue<Page> toSaveQueue) {
         this.page = page;

@@ -81,4 +81,12 @@ public final class CrawlerService extends Thread {
         return (((ThreadPoolExecutor) pool).getActiveCount() == 0) && (toLoadQueue.size() == 0) && (toSaveQueue.size() == 0);
     }
 
+    public int getToLoadQueueSize() {
+        return toLoadQueue.size();
+    }
+
+    public int getToSaveQueueSize() {
+        return toSaveQueue.size();
+    }
+
 }
