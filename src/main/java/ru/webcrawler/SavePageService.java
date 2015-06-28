@@ -3,10 +3,7 @@ package ru.webcrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -67,9 +64,17 @@ public class SavePageService extends Thread {
     private void saveToDB() {
         EntityTransaction t = entityManager.get().getTransaction();
 
-        t.begin();
-        for (Page page : pagesToSave) entityManager.get().persist(page);
-        t.commit();
+        for (Page page : pagesToSave) {
+            try {
+                t.begin();
+                entityManager.get().persist(page);
+                t.commit();
+
+            } catch (PersistenceException e) {
+                t.rollback();
+                log.warn("Page saving error: {}", e.getMessage());
+            }
+        }
 
         log.info("{} pages have been saved.", pagesToSave.size());
         pagesToSave.clear();

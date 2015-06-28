@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
+import java.util.Set;
 
 
 /**
@@ -30,6 +31,7 @@ public class LoadPageTask extends Thread {
     @Override
     public void run() {
         page.load();
+        Set<Page> childrenPages = page.getChildrenPages();
         toSaveQueue.offer(page);
 
         if (page.getDepth() >= maxDepth) {
@@ -37,6 +39,6 @@ public class LoadPageTask extends Thread {
             return;
         }
 
-        for (Page p : page.getChildrenPages()) toLoadQueue.offer(p);
+        for (Page p : childrenPages) toLoadQueue.offer(p);
     }
 }

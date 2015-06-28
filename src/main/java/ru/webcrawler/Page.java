@@ -36,8 +36,7 @@ public final class Page implements Serializable {
     @Column(name = "version")
     private int version = 0;
 
-    //TODO make unique
-    @Column(name = "url")
+    @Column(name = "url", unique = true)
     private String url;
 
     @Column(name = "depth")
